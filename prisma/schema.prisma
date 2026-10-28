@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Independent developer looking to partner with creators
+model Developer {
+  id              String   @id @default(cuid())
+  name            String
+  title           String
+  bio             String
+  location        String
+  timezone        String
+  skills          String   // JSON string array, e.g. '["React","Next.js"]'
+  niches          String   // JSON string array of creator niches they serve
+  hourlyRate      Int      // USD
+  availability    String   // "Full-time" | "Part-time" | "Weekends"
+  experienceLevel String   // "Junior" | "Mid-level" | "Senior" | "Lead"
+  portfolioUrl    String?
+  githubUrl       String?
+  pastWork        String   // description of notable past collaborations
+  rating          Float    @default(4.5)
+  projectsDone    Int      @default(0)
+  createdAt       DateTime @default(now())
+  matches         Match[]
+  applications    Application[]
+}
+
+// Content creator looking for technical partners
+model Creator {
+  id           String   @id @default(cuid())
+  name         String
+  channelName  String
+  platform     String   // "YouTube" | "TikTok" | "Twitch" | "Newsletter" | "Podcast" | "Instagram"
+  niche        String   // e.g. "Dev Tools", "Indie Games"
+  subscribers  Int
+  avgViews     Int
+  bio          String
+  location     String
+  timezone     String
+  lookingFor   String   // what kind of technical help they need
+  skillsNeeded String   // JSON string array
+  budgetMin    Int      // USD per month / project
+  budgetMax    Int
+  contentUrl   String?
+  rating       Float    @default(4.5)
+  collabsDone  Int      @default(0)
+  createdAt    DateTime @default(now())
+  projects     Project[]
+  matches      Match[]
+}
+
+// Project brief posted by a creator
+model Project {
+  id           String   @id @default(cuid())
+  creatorId    String
+  title        String
+  description  String
+  skillsNeeded String   // JSON string array
+  niche        String
+  budgetMin    Int
+  budgetMax    Int
+  timeline     String   // e.g. "2-4 weeks"
+  status       String   @default("open") // "open" | "closed"
+  createdAt    DateTime @default(now())
+  creator      Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  applications Application[]
+}
+
+// A connection between a developer and a creator
+model Match {
+  id          String   @id @default(cuid())
+  developerId String
+  creatorId   String
+  initiatedBy String   // "developer" | "creator"
+  message     String
+  status      String   @default("pending") // "pending" | "accepted"
+  createdAt   DateTime @default(now())
+  developer   Developer @relation(fields: [developerId], references: [id], onDelete: Cascade)
+  creator     Creator   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+}
+
+// A developer applying to a project brief
+model Application {
+  id         String   @id @default(cuid())
+  projectId  String
+  developerId String
+  message    String
+  status     String   @default("pending") // "pending" | "accepted" | "declined"
+  createdAt  DateTime @default(now())
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  developer  Developer @relation(fields: [developerId], references: [id], onDelete: Cascade)
+}
